@@ -8,7 +8,8 @@ namespace YouTrack\Entity;
  *
  * @author Bart van den Burg <bart@samson-it.nl>
  */
-class Issue {
+class Issue
+{
 
     private $id;
     private $projectEntity;
@@ -19,6 +20,7 @@ class Issue {
     private $estimate;
     private $children = array();
     private $timetrackEntries = array();
+    private $url;
 
     public function getId()
     {
@@ -34,7 +36,8 @@ class Issue {
      * Project detail data (name, config, etc)
      * @return mixed
      */
-    public function getProjectEntity() {
+    public function getProjectEntity()
+    {
         return $this->projectEntity;
     }
 
@@ -42,7 +45,8 @@ class Issue {
      * Set the project detail data.
      * @param Project $project
      */
-    public function setProjectEntity(Project $project) {
+    public function setProjectEntity(Project $project)
+    {
         $this->projectEntity = $project;
     }
 
@@ -101,11 +105,11 @@ class Issue {
      * @param Issue $parent
      * @param bool $addChild
      */
-    public function setParent(Issue $parent, $addChild = true )
+    public function setParent(Issue $parent, $addChild = true)
     {
         $this->parent = $parent;
-        if( $addChild ) {
-            $parent->addChild( $this, false );
+        if ($addChild) {
+            $parent->addChild($this, false);
         }
     }
 
@@ -113,11 +117,13 @@ class Issue {
      * Store estimate property
      * @param $estimate
      */
-    public function setEstimate( $estimate ) {
+    public function setEstimate($estimate)
+    {
         $this->estimate = $estimate;
     }
 
-    public function getEstimate() {
+    public function getEstimate()
+    {
         return $this->estimate;
     }
 
@@ -126,14 +132,16 @@ class Issue {
      * @param Issue $child
      * @param bool $addParent
      */
-    public function addChild( Issue $child, $addParent = true ) {
+    public function addChild(Issue $child, $addParent = true)
+    {
         $this->children[] = $child;
-        if( $addParent ) {
-            $child->setParent( $this, false );
+        if ($addParent) {
+            $child->setParent($this, false);
         }
     }
-    
-    public function getChildren() {
+
+    public function getChildren()
+    {
         return $this->children;
     }
 
@@ -153,5 +161,19 @@ class Issue {
         $this->timetrackEntries = $timetrackEntries;
     }
 
+    /**
+     * @return string
+     */
+    public function getUrl()
+    {
+        return $this->url;
+    }
 
+    /**
+     * @param string $url
+     */
+    public function setUrl($url)
+    {
+        $this->url = $url;
+    }
 }

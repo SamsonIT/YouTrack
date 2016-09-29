@@ -204,7 +204,7 @@ class YouTrackCommunicator
                     break;
             }
         }
-
+        $issue->setUrl($this->getUrl($issue));
         return $issue;
     }
 
@@ -546,5 +546,10 @@ class YouTrackCommunicator
             $output[] = $labour;
         }
         return $output;
+    }
+
+    public function getUrl($issue)
+    {
+        return $this->getOption('uri') . '/issue/' . $issue->getId();
     }
 }
