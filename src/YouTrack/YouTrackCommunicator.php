@@ -33,7 +33,7 @@ class YouTrackCommunicator
      * Construct communicator and inject Guzzle instance.
      *
      * @param Guzzle Mockable guzzle instance
-     * @param array   $options
+     * @param array $options
      */
     public function __construct(Client $guzzle, $options = array())
     {
@@ -52,7 +52,7 @@ class YouTrackCommunicator
     protected function getOption($option)
     {
         if (!isset($this->options[$option])) {
-            throw new \InvalidArgumentException('The option '.$option.' does not exist');
+            throw new \InvalidArgumentException('The option ' . $option . ' does not exist');
         }
         return $this->options[$option];
     }
@@ -62,7 +62,7 @@ class YouTrackCommunicator
      * @throws APIException
      * @return \Guzzle\Http\Client $client
      */
-    protected function GETRequest($path, $data=array())
+    protected function GETRequest($path, $data = array())
     {
         $startTime = microtime(true);
         $response = $this->guzzle->get($path, array(), $data)->send();
@@ -70,7 +70,7 @@ class YouTrackCommunicator
             throw new Exception\APIException(__METHOD__, $response);
         }
         $duration = microtime(true) - $startTime;
-        $this->executed[] = Array('method'=> 'GET', 'duration'=> $duration, 'path'=> $path, 'data'=> $data);
+        $this->executed[] = Array('method' => 'GET', 'duration' => $duration, 'path' => $path, 'data' => $data);
         return $response->json();
     }
 
@@ -82,11 +82,12 @@ class YouTrackCommunicator
      * @param array $headers optional extra headers.
      * @return array parsed json
      */
-    protected function POSTRequest($path, $data = array(), $headers = array()) {
+    protected function POSTRequest($path, $data = array(), $headers = array())
+    {
         $startTime = microtime(true);
         $response = $this->guzzle->post($path, $headers, $data)->send();
         $duration = microtime(true) - $startTime;
-        $this->executed[] = Array('method'=> 'GET', 'duration'=> $duration, 'path'=> $path, 'data'=> $data);
+        $this->executed[] = Array('method' => 'GET', 'duration' => $duration, 'path' => $path, 'data' => $data);
 
         if ($response->isError()) {
             throw new Exception\APIException(__METHOD__, $response);
@@ -127,7 +128,7 @@ class YouTrackCommunicator
      */
     public function supports($string)
     {
-        return preg_match('/^'.$this->regexp.'$/', $string);
+        return preg_match('/^' . $this->regexp . '$/', $string);
     }
 
     /**
@@ -143,7 +144,7 @@ class YouTrackCommunicator
      */
     public function findIds($string)
     {
-        preg_match_all('/#('.$this->regexp.')/', $string, $m);
+        preg_match_all('/#(' . $this->regexp . ')/', $string, $m);
         return $m[1];
     }
 
@@ -227,7 +228,7 @@ class YouTrackCommunicator
             }
 
             try {
-                $issueData = $this->guzzle->get('/rest/issue/'.$id)->send()->json();
+                $issueData = $this->guzzle->get('/rest/issue/' . $id)->send()->json();
                 $project = $this->preFetchProject($issueData); // prefetch project data and config for issue when not cached.
 
                 $this->getTodo(); // fetch issues that are on the 'to fetch' list so that children/parents are set properly for this issue
@@ -290,13 +291,13 @@ class YouTrackCommunicator
      *
      * @return array[Issue]
      */
-    private function getIssuesFromResponse(array $response, $withTimeTracking=false)
+    private function getIssuesFromResponse(array $response, $withTimeTracking = false)
     {
         $issues = array();
         foreach ($response['issue'] as $issueData) {
             $issue = $this->parseIssueData($issueData['id'], $issueData);
             $issue->setProjectEntity($this->preFetchProject($issueData)); // set prefetched project onto entity.
-            if($withTimeTracking) {
+            if ($withTimeTracking) {
                 try {
                     $this->getWorkItemsForIssue($issue);
                 } catch (APIException $E) {
@@ -321,7 +322,7 @@ class YouTrackCommunicator
      *
      * @return array[Issue]
      */
-    public function getIssues(array $ids, $withTimeTracking=true)
+    public function getIssues(array $ids, $withTimeTracking = true)
     {
         if (!count($ids)) {
             return array();
@@ -329,7 +330,7 @@ class YouTrackCommunicator
         $search = implode('%20', array_map(function ($id) {
             return "%23$id";
         }, $ids));
-        $response = $this->GETrequest('/rest/issue?filter='.$search);
+        $response = $this->GETrequest('/rest/issue?filter=' . $search);
         $issues = $this->getIssuesFromResponse($response, $withTimeTracking);
 
         // get any todo pushed to the list, so that children/parents are set properly for this issue
@@ -342,8 +343,8 @@ class YouTrackCommunicator
      * Find a list of issues for a youtrack format filter.
      *
      * @param $filter
-     * @param array  $with
-     * @param int    $max
+     * @param array $with
+     * @param int $max
      * @param string $after
      *
      * @return array[Issue]
@@ -351,7 +352,7 @@ class YouTrackCommunicator
     public function searchIssues($filter, $with = array(), $max = 10, $after = '')
     {
         $args = array_filter(array('filter' => $filter, 'with' => $with, 'max' => $max, 'after' => $after));
-        $response = $this->GETRequest('/rest/issue?'.http_build_query($args));
+        $response = $this->GETRequest('/rest/issue?' . http_build_query($args));
         $issues = $this->getIssuesFromResponse($response, true);
         // get any todo pushed to the list, so that children/parents are set properly for this issue
         $this->getTodo();
@@ -385,29 +386,29 @@ class YouTrackCommunicator
      * @see https://confluence.jetbrains.com/display/YTD4/Search+and+Command+Attributes
      * @see https://confluence.jetbrains.com/display/YTD3/Apply+Command+to+an+Issue
      *
-     * @param Issue $issue    to execute commands on
-     * @param array        $commands array of string commands (will be joined)
+     * @param Issue $issue to execute commands on
+     * @param array $commands array of string commands (will be joined)
      * @param $comment A comment to add to an issue.
-     * @param string $group  User group name. Use to specify visibility settings of a comment to be post.
-     * @param bool   $silent If set 'true' then no notifications about changes made with the specified command will be send. By default, is 'false'.
-     * @param null   $runAs  Login for a user on whose behalf the command should be executed. (Note, that to use runAs parameter you should have Update project permission in issue's project)
+     * @param string $group User group name. Use to specify visibility settings of a comment to be post.
+     * @param bool $silent If set 'true' then no notifications about changes made with the specified command will be send. By default, is 'false'.
+     * @param null $runAs Login for a user on whose behalf the command should be executed. (Note, that to use runAs parameter you should have Update project permission in issue's project)
      *
      * @return mixed API Response
      */
     public function executeCommands(Issue $issue, array $commands, $comment, $group = '', $silent = false, $runAs = null)
     {
         $post = array();
-        $post[] = 'command='.urlencode(implode(' ', $commands));
-        $post[] = 'comment='.urlencode($comment);
-        $post[] = 'disableNotifications='.($silent ? 'true' : 'false');
+        $post[] = 'command=' . urlencode(implode(' ', $commands));
+        $post[] = 'comment=' . urlencode($comment);
+        $post[] = 'disableNotifications=' . ($silent ? 'true' : 'false');
         if (null !== $group) {
-            $post[] = 'group='.urlencode($group);
+            $post[] = 'group=' . urlencode($group);
         }
         if (null !== $runAs) {
-            $post[] = 'runAs='.$runAs;
+            $post[] = 'runAs=' . $runAs;
         }
 
-        return $this->POSTRequest('/rest/issue/'.$issue->getId().'/execute', implode('&', $post));
+        return $this->POSTRequest('/rest/issue/' . $issue->getId() . '/execute', implode('&', $post));
     }
 
     /**
@@ -421,7 +422,7 @@ class YouTrackCommunicator
      */
     public function findUserName($email)
     {
-        $data = $this->GETRequest('/rest/admin/user?q='.$email);
+        $data = $this->GETRequest('/rest/admin/user?q=' . $email);
         foreach ($data as $userData) {
             $userData = $this->GETRequest($userData['url']);
             if ($userData['email'] == $email) {
@@ -442,7 +443,7 @@ class YouTrackCommunicator
      */
     private function getFixVersionBundleName($project)
     {
-        $fieldData = $this->GETRequest('/rest/admin/project/'.$project.'/customfield/Fix%20versions');
+        $fieldData = $this->GETRequest('/rest/admin/project/' . $project . '/customfield/Fix%20versions');
         return $fieldData['param'][0]['value'];
     }
 
@@ -457,7 +458,7 @@ class YouTrackCommunicator
      */
     private function getVersionData($bundleName)
     {
-        return $this->GETRequest('/rest/admin/customfield/versionBundle/'.$bundleName);
+        return $this->GETRequest('/rest/admin/customfield/versionBundle/' . $bundleName);
     }
 
     /**
@@ -471,7 +472,7 @@ class YouTrackCommunicator
      */
     private function getTimeTrackingSettings(Project $project)
     {
-        return $this->GETRequest('/rest/admin/project/'.$project->getName().'/timetracking');
+        return $this->GETRequest('/rest/admin/project/' . $project->getName() . '/timetracking');
     }
 
     /**
@@ -482,13 +483,13 @@ class YouTrackCommunicator
      * @see https://confluence.jetbrains.com/display/YTD6/Create%20New%20Work%20Item
      *
      * @param Issue $issue
-     * @param int          $timeToBook in minutes
-     * @param string       $comment    (optional, default: "Added via YouTrackCommunicator API"))
-     * @param string       $type       (optional, default: "Development"). Possible: One of the allowed types by YouTrack: 'No type', 'Development', 'Testing', 'Documentation'
-     * @param DateTime     $atDate     (optional) default date/time of booking, or current date when not passed.
+     * @param int $timeToBook in minutes
+     * @param string $comment (optional, default: "Added via YouTrackCommunicator API"))
+     * @param string $type (optional, default: "Development"). Possible: One of the allowed types by YouTrack: 'No type', 'Development', 'Testing', 'Documentation'
+     * @param DateTime $atDate (optional) default date/time of booking, or current date when not passed.
      * @return bool added
      */
-    public function trackTimeOnIssue(Issue $issue, $timeToBook = 0, $comment = 'Added via YouTrackCommunicator API.', $type = 'Development', $atDate=null)
+    public function trackTimeOnIssue(Issue $issue, $timeToBook = 0, $comment = 'Added via YouTrackCommunicator API.', $type = 'Development', $atDate = null)
     {
         $output = false;
         $atDate = $atDate !== null ? new \DateTime() : new DateTime($atDate);
@@ -501,13 +502,13 @@ class YouTrackCommunicator
                 <worktype><name>%s</name></worktype>
                 </workItem>', $atDate->getTimestamp() * 1000, $timeToBook, $comment, $type);
 
-            $response = $this->guzzle->post('/rest/issue/'.$issue->getId().'/timetracking/workitem', array(
+            $response = $this->guzzle->post('/rest/issue/' . $issue->getId() . '/timetracking/workitem', array(
                 'Content-Type' => 'application/xml; charset=UTF-8',
                 'Content-Length' => strlen($xml),
-            ),  $xml)->send();
+            ), $xml)->send();
 
             if ($response->getStatusCode() != 201) {
-                throw new Exception\APIException(__METHOD__.' WorkItem record not created. ', $response);
+                throw new Exception\APIException(__METHOD__ . ' WorkItem record not created. ', $response);
             } else {
                 $output = true;
             }
@@ -526,7 +527,7 @@ class YouTrackCommunicator
      */
     public function getWorkItemsForIssue(Issue $issue)
     {
-        $items = $this->GETRequest('/rest/issue/'.$issue->getId().'/timetracking/workitem');
+        $items = $this->GETRequest('/rest/issue/' . $issue->getId() . '/timetracking/workitem');
         $output = array();
 
         foreach ($items as $item) {
