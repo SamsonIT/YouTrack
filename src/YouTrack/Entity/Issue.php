@@ -22,6 +22,11 @@ class Issue
     private $timetrackEntries = array();
     private $url;
 
+    /**
+     * @var int seconds
+     */
+    private $spentTime;
+
     public function getId()
     {
         return $this->id;
@@ -176,4 +181,21 @@ class Issue
     {
         $this->url = $url;
     }
+
+    /**
+     * @return int
+     */
+    public function getSpentTime()
+    {
+        return $this->spentTime;
+    }
+
+    /**
+     * @param int $spentTime
+     */
+    public function setSpentTime($spentTime)
+    {
+        $this->spentTime = $spentTime;
+    }
+
 }
