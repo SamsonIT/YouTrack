@@ -3,6 +3,7 @@
 namespace YouTrack;
 
 use Guzzle\Http\Client;
+use Guzzle\Http\Exception\ClientErrorResponseException;
 use Guzzle\Http\Message\Response;
 use YouTrack\Entity\Issue;
 use YouTrack\Entity\Project;
@@ -237,7 +238,7 @@ class YouTrackCommunicator
                 $issue->setProjectEntity($project); // set prefetched project onto entity.
                 $this->issueCache[$id] = $issue; //inject issue into issuecache.
 
-            } catch (APIException $E) {
+            } catch (ClientErrorResponseException $E) {
                 if ($E->getResponse()->getStatusCode() == 404) {
                     $this->issueCache[$id] = null;
                     return;
