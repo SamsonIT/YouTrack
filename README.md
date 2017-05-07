@@ -1,4 +1,4 @@
-Youtrack API wrapper
+YouTrack API wrapper
 ====================
 
 General classes to communicate with the YouTrack API and execute some commands.
@@ -7,7 +7,7 @@ Fetches issues as nice Issue entities.
 
 Usage:
 
-```
+```php
 use Guzzle\Http\Client;
 
 require('src/YouTrack/YouTrackCommunicator.php');
@@ -15,7 +15,7 @@ require('vendor/autoload.php');
 
 $http = new Client('https://my.youtrack.endpoint');
 
-$api = new \YouTrack\YouTrackCommunicator($client, array(
+$api = new \YouTrack\YouTrackCommunicator($http, array(
     'username' => 'your_api_user',
     'password' => 'your_api_password'
 ));
@@ -41,4 +41,3 @@ December 2015: Released v2.0.0
 - Made fetching TimeTracking info optional
 - Removed ReleaseVersion and UnreleaseVersion
 - Removed tests until we can write actually useful ones.
-
