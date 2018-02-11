@@ -246,6 +246,9 @@ class YouTrackCommunicator
             }
         }
 
+        // make sure latest todo-items are processed as well
+        $this->getTodo();
+
         return $this->issueCache[$id];
     }
 
