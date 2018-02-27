@@ -184,8 +184,9 @@ class YouTrackCommunicator
                     break;
                 case 'links':
                     foreach ($fieldData['value'] as $link) {
+                        $cacheId = strtolower($link['value']);
                         if ($link['role'] == 'subtask of') {
-                            if (array_key_exists($link['value'], $this->issueCache)) {
+                            if (array_key_exists($cacheId, $this->issueCache)) {
                                 // already loaded, set connection
                                 $issue->setParent($this->getIssue($link['value'], false));
                             } else {
@@ -194,7 +195,7 @@ class YouTrackCommunicator
                             }
                         }
                         if ($link['role'] == 'parent for') {
-                            if (array_key_exists($link['value'], $this->issueCache)) {
+                            if (array_key_exists($cacheId, $this->issueCache)) {
                                 $issue->addChild($this->getIssue($link['value'], false));
                             } else {
                                 // this issue will need to be loaded later (and the parent will set the connection to the child when loaded)
@@ -226,7 +227,8 @@ class YouTrackCommunicator
      */
     public function getIssue($id, $processTodoList = true)
     {
-        if (!isset($this->issueCache[$id])) {
+        $cacheId = strtolower($id);
+        if (!isset($this->issueCache[$cacheId])) {
             if ($id[0] == '#') {
                 throw new \InvalidArgumentException('Supply the issue ID without the #');
             }
@@ -237,11 +239,11 @@ class YouTrackCommunicator
 
                 $issue = $this->parseIssueData($id, $issueData); // parse issue arraydata into an entity.
                 $issue->setProjectEntity($project); // set prefetched project onto entity.
-                $this->issueCache[$id] = $issue; //inject issue into issuecache.
+                $this->issueCache[$cacheId] = $issue; //inject issue into issuecache.
 
             } catch (ClientErrorResponseException $E) {
                 if ($E->getResponse()->getStatusCode() == 404) {
-                    $this->issueCache[$id] = null;
+                    $this->issueCache[$cacheId] = null;
                     return;
                 }
             }
@@ -252,7 +254,7 @@ class YouTrackCommunicator
             $this->getTodo();
         }
 
-        return $this->issueCache[$id];
+        return $this->issueCache[$cacheId];
     }
 
     /**
@@ -315,8 +317,9 @@ class YouTrackCommunicator
                     }
                 }
             }
-            $this->issueCache[$issueData['id']] = $issue;
-            $issues[] = $this->issueCache[$issueData['id']];
+            $cacheId = strtolower($issueData['id']);
+            $this->issueCache[$cacheId] = $issue;
+            $issues[] = $this->issueCache[$cacheId];
         }
 
         return $issues;
