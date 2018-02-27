@@ -32,6 +32,8 @@ class YouTrackCommunicator
     private $toLoad = array();
     private $executed = array();
 
+    private $siblings = true;
+
     /**
      * Construct communicator and inject Guzzle instance.
      *
@@ -43,6 +45,18 @@ class YouTrackCommunicator
         $this->guzzle = $guzzle;
         $this->options = $options;
         $this->login();
+    }
+
+    public function setSiblings($siblings)
+    {
+        $this->siblings = $siblings;
+
+        return $this;
+    }
+
+    public function getSiblings()
+    {
+        return $this->siblings;
     }
 
     /**
@@ -199,7 +213,9 @@ class YouTrackCommunicator
                                 $issue->addChild($this->getIssue($link['value'], false));
                             } else {
                                 // this issue will need to be loaded later (and the parent will set the connection to the child when loaded)
-                                $this->toLoad[$link['value']] = true;
+                                if ($this->siblings) {
+                                    $this->toLoad[$link['value']] = true;
+                                }
                             }
                         }
                     }
