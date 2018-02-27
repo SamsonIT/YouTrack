@@ -187,7 +187,7 @@ class YouTrackCommunicator
                         if ($link['role'] == 'subtask of') {
                             if (array_key_exists($link['value'], $this->issueCache)) {
                                 // already loaded, set connection
-                                $issue->setParent($this->getIssue($link['value']));
+                                $issue->setParent($this->getIssue($link['value'], false));
                             } else {
                                 // this issue will also need to be loaded later (and the child will set the connection to the parent when loaded)
                                 $this->toLoad[$link['value']] = true;
@@ -195,7 +195,7 @@ class YouTrackCommunicator
                         }
                         if ($link['role'] == 'parent for') {
                             if (array_key_exists($link['value'], $this->issueCache)) {
-                                $issue->addChild($this->getIssue($link['value']));
+                                $issue->addChild($this->getIssue($link['value'], false));
                             } else {
                                 // this issue will need to be loaded later (and the parent will set the connection to the child when loaded)
                                 $this->toLoad[$link['value']] = true;
@@ -220,10 +220,11 @@ class YouTrackCommunicator
      * @throws APIException
      *
      * @param $id
+     * @param boolean $processTodoList true by default: internal calls use $processTodoList = false
      *
      * @return Issue
      */
-    public function getIssue($id)
+    public function getIssue($id, $processTodoList = true)
     {
         if (!isset($this->issueCache[$id])) {
             if ($id[0] == '#') {
@@ -233,8 +234,6 @@ class YouTrackCommunicator
             try {
                 $issueData = $this->guzzle->get('/rest/issue/' . $id)->send()->json();
                 $project = $this->preFetchProject($issueData); // prefetch project data and config for issue when not cached.
-
-                $this->getTodo(); // fetch issues that are on the 'to fetch' list so that children/parents are set properly for this issue
 
                 $issue = $this->parseIssueData($id, $issueData); // parse issue arraydata into an entity.
                 $issue->setProjectEntity($project); // set prefetched project onto entity.
@@ -248,8 +247,10 @@ class YouTrackCommunicator
             }
         }
 
-        // make sure latest todo-items are processed as well
-        $this->getTodo();
+        if ($processTodoList) {
+            // make sure latest todo-items are processed as well
+            $this->getTodo();
+        }
 
         return $this->issueCache[$id];
     }
@@ -325,10 +326,12 @@ class YouTrackCommunicator
      * Fetch a list of issues from the api.
      *
      * @param array $ids
+     * @param boolean $withTimeTracking
+     * @param boolean $processTodoList true by default: internal calls use $processTodoList = false
      *
      * @return array[Issue]
      */
-    public function getIssues(array $ids, $withTimeTracking = true)
+    public function getIssues(array $ids, $withTimeTracking = true, $processTodoList = true)
     {
         if (!count($ids)) {
             return array();
@@ -349,8 +352,10 @@ class YouTrackCommunicator
             }
         }
 
-        // get any todo pushed to the list, so that children/parents are set properly for this issue
-        $this->getTodo();
+        if ($processTodoList) {
+            // get any todo pushed to the list, so that children/parents are set properly for this issue
+            $this->getTodo();
+        }
 
         return $issues;
     }
@@ -377,22 +382,15 @@ class YouTrackCommunicator
 
     /**
      * Internal method to fetch issues that we still need to fetch from the API.
-     * Recursively calls itself until it fetched all parent/child issues.
-     *
-     * @return array
+     * Repeatedly call getIssues() until it fetched all parent/child issues.
      */
     private function getTodo()
     {
-        // if we have a todo, load those issues as well
-        if (count($this->toLoad) > 0) {
+        while (count($this->toLoad) > 0) {
             $load = $this->toLoad;
             $this->toLoad = array();
-            $issues = $this->getIssues(array_keys($load));
-
-            return array_merge($issues, $this->getTodo());
+            $this->getIssues(array_keys($load), true, false);
         }
-
-        return array();
     }
 
     /**
