@@ -21,6 +21,8 @@ use YouTrack\Exception\APIException;
  */
 class YouTrackCommunicator
 {
+    const BATCH_SIZE = 100;
+
     private $guzzle;
     private $options;
     private $cookie = null;
@@ -331,11 +333,21 @@ class YouTrackCommunicator
         if (!count($ids)) {
             return array();
         }
-        $search = implode('%20', array_map(function ($id) {
-            return "%23$id";
-        }, $ids));
-        $response = $this->GETrequest('/rest/issue?filter=' . $search);
-        $issues = $this->getIssuesFromResponse($response, $withTimeTracking);
+        $ids = array_unique($ids);
+        $idChuncks = array_chunk($ids, self::BATCH_SIZE);
+
+        $issues = [];
+        foreach ($idChuncks as $idChunck) {
+            $search = implode('%20', array_map(function ($id) {
+                return "%23$id";
+            }, $idChunck));
+            $response = $this->GETrequest('/rest/issue?filter=' . $search.'&max='.self::BATCH_SIZE);
+            $issuesChunk = $this->getIssuesFromResponse($response, $withTimeTracking);
+
+            foreach ($issuesChunk as $issue) {
+                $issues[] = $issue;
+            }
+        }
 
         // get any todo pushed to the list, so that children/parents are set properly for this issue
         $this->getTodo();
