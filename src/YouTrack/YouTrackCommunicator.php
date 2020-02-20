@@ -3,6 +3,7 @@
 namespace YouTrack;
 
 use Guzzle\Http\Client;
+use Guzzle\Http\Exception\BadResponseException;
 use Guzzle\Http\Exception\ClientErrorResponseException;
 use Guzzle\Http\Message\Response;
 use YouTrack\Entity\Issue;
@@ -82,9 +83,10 @@ class YouTrackCommunicator
     protected function GETRequest($path, $data = array())
     {
         $startTime = microtime(true);
-        $response = $this->guzzle->get($path, array(), $data)->send();
-        if ($response->isError()) {
-            throw new Exception\APIException(__METHOD__, $response);
+        try {
+            $response = $this->guzzle->get($path, array(), $data)->send();
+        } catch (BadResponseException $e) {
+            throw new Exception\APIException(__METHOD__, $e->getResponse());
         }
         $duration = microtime(true) - $startTime;
         $this->executed[] = Array('method' => 'GET', 'duration' => $duration, 'path' => $path, 'data' => $data);
