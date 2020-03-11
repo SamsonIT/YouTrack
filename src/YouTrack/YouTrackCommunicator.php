@@ -225,6 +225,9 @@ class YouTrackCommunicator
                 case 'Estimation':
                     $issue->setEstimate($fieldData['value'][0]);
                     break;
+                default:
+                    $issue->setExtraField($fieldData['name'], $fieldData['value']);
+                    break;
             }
         }
         $issue->setUrl($this->getUrl($issue));

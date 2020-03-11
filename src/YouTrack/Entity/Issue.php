@@ -21,6 +21,7 @@ class Issue
     private $children = array();
     private $timetrackEntries = array();
     private $url;
+    private $extraFields = array();
 
     /**
      * @var int seconds
@@ -198,4 +199,19 @@ class Issue
         $this->spentTime = $spentTime;
     }
 
+    public function setExtraField($key, $value)
+    {
+        $this->extraFields[$key] = $value;
+        return $this;
+    }
+
+    public function getExtraField($key, $value = null)
+    {
+        return array_key_exists($key, $this->extraFields) ? $this->extraFields[$key] : $value;
+    }
+
+    public function getExtraFields()
+    {
+        return $this->extraFields;
+    }
 }
