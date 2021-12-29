@@ -1,3 +1,5 @@
+Abandoned. You should probably have a look at https://github.com/cybercog/youtrack-rest-php
+
 YouTrack API wrapper
 ====================
 
